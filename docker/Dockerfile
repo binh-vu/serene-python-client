@@ -1,7 +1,7 @@
 #
 # Docker file for the serene python client in combination with cp solver
 #
-FROM ubuntu
+FROM ubuntu:16.04
 
 MAINTAINER Data61 CSIRO
 
