@@ -907,6 +907,7 @@ def do_chuffed(server, ch_octopus, ch_dataset, ch_column_names, ch_ssd, orig_ssd
                  train_flag, time.time() - start, chuffed_path, simplify, None,
                  soft_assumptions, pattern_sign, accu, None,
                  None, None, None, None, None, pattern_time, None, None, None, None]]
+        raise
     return res
 
 def do_karma(server, k_octopus, k_dataset, k_ssd, orig_ssd,

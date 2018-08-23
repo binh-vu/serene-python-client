@@ -14,7 +14,9 @@ from importlib import reload
 import csv
 
 if "SERENE_PYTHON" not in os.environ:
-    os.environ["SERENE_PYTHON"] = "/home/natalia/PycharmProjects/serene-python-client"
+    ###############################
+    # ** VALUE HAS BEEN MODIFIED **
+    os.environ["SERENE_PYTHON"] = "/workspace/tmp/serene-python-client"
 
 project_path = os.environ["SERENE_PYTHON"]
 
@@ -32,6 +34,22 @@ except ImportError as e:
 
 import logging
 from logging.handlers import RotatingFileHandler
+
+
+######################################
+# ** THIS SECTION HAS BEEN MODIFIED **
+from pathlib import Path
+import pickle
+def serialize_obj(obj, file):
+    with open(file, "wb") as f:
+        pickle.dump(obj, f)
+
+
+def deserialize_obj(file):
+    with open(file, "rb") as f:
+        return pickle.load(f)
+######################################
+
 
 # setting up the logging
 log_file = os.path.join(project_path, "stp", "resources", 'benchmark_stp.log')
@@ -53,8 +71,10 @@ log.addHandler(my_handler)
 #  Start with a connection to the server...
 #
 # =======================
+###############################
+# ** VALUE HAS BEEN MODIFIED **
 sn = serene.Serene(
-    host='127.0.0.1',
+    host='192.168.86.204',
     port=8080,
 )
 print(sn)
@@ -119,7 +139,7 @@ if os.path.exists(os.path.join(dataset_dir, "data.tar.gz")):
 
 # input("Press enter to upload datasets and ssds...")
 
-for ds in os.listdir(dataset_dir):
+for ds in sorted(os.listdir(dataset_dir)):
     if ds.endswith(".gz"):
         continue
     ds_f = os.path.join(dataset_dir, ds)
@@ -173,7 +193,8 @@ with open(result_csv, "w+") as f:
                    "soft_assumptions", "pattern_significance", "sm_accuracy", "sol_accuracy",
                    "match_score", "cost", "objective", "cor_match_score", "cor_cost"])  # header
 
-    sample_range = list(range(len(ssds)))
+    # ** MIRA MODIFIES HERE **
+    sample_range = list(range(len(ssds)))[:3]
     len_sample = len(sample_range)
     benchmark_results = [["experiment", "octopus", "dataset", "name", "ssd",
                           "method", "solution", "status",
@@ -192,13 +213,25 @@ with open(result_csv, "w+") as f:
         # here we run only leave-one-out setting
         num = len(sample_range) -1
         train_sample = sample_range[:max(cur_id+num+1 - len_sample,0)] + sample_range[cur_id+1: cur_id+1+num]
+        # ** MIRA MODIFIES HERE **
+        train_sample = train_sample[:2]
         print("     train sample size: ", num)
 
         try:
-            octo = al.create_octopus(sn, ssds, train_sample, ontologies)
+            # ** MIRA MODIFIES HERE **
+            octo_file = "/workspace/tmp/serene-python-client/stp/resources/octopus/" + ssds[cur_id].name + ".pkl"
+            print("OCTO_FILE:", octo_file)
+            if Path(octo_file).exists():
+                octo = deserialize_obj(octo_file)
+            else:
+                octo = al.create_octopus(sn, ssds, train_sample, ontologies)
+                octo._matcher._pp = None
+                serialize_obj(octo, octo_file)
+
         except Exception as e:
             logging.error("Octopus creation failed: {}".format(e))
             print("Octopus creation failed: {}".format(e))
+            raise
             continue
 
         octo_csv = os.path.join(project_path, "stp", "resources", "storage",
@@ -209,6 +242,11 @@ with open(result_csv, "w+") as f:
             print("failed to get patterns: {}".format(e))
             logging.warning("failed to get patterns: {}".format(e))
             octo_patterns = None
+
+        # ** MIRA MODIFIES HERE **
+        import IPython
+        IPython.embed()
+
         print("Uploaded octopus:", octo)
 
         chuffed_paths = [

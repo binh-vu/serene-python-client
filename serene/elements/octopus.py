@@ -244,7 +244,7 @@ class Octopus(object):
         iter = 0
         while not is_finished():
             print("\rWaiting for the training to complete " + '.'*iter, end='')
-            time.sleep(3)  # wait in polling loop
+            time.sleep(10)  # wait in polling loop
             iter += 1
 
         print("Training complete for {}".format(self.id))
