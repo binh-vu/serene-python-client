@@ -865,6 +865,12 @@ def do_chuffed(server, ch_octopus, ch_dataset, ch_column_names, ch_ssd, orig_ssd
             cp_ssd = SSD().update(json_sol, server._datasets, server._ontologies)
             eval = cp_ssd.evaluate(ch_ssd, False, True)
 
+            ######################################
+            # ** THIS SECTION HAS BEEN MODIFIED **
+            import IPython
+            IPython.embed()
+            ######################################
+
             # time returned by chuffed
             chuffed_time = json_sol["time"]
             # match score calculated by chuffed

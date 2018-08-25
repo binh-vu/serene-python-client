@@ -5,7 +5,7 @@
 #=====================
 
 # This is the path to the chuffed CP solver; do not add / at the end
-chuffed-path: $SERENE_PYTHON/stp/minizinc/chuffed-rel2onto_20170728
+chuffed-path: /home/serene/stp/minizinc/chuffed-rel2onto_20170728
 
 # This is the path to the model.mzn
 model-path: $SERENE_PYTHON/stp/minizinc/model.mzn

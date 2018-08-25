@@ -57,7 +57,7 @@ RUN pip3 --no-cache-dir install \
         pandas \
         requests \
         rdflib \
-        networkx \
+        networkx==1.11 \
         pyyaml && \
     python3 -m ipykernel.kernelspec
 
@@ -126,23 +126,23 @@ ENV PATH $PATH:/usr/local/boost_1_64_0:/home/$username/MiniZincIDE-2.1.4-bundle-
 #ENV PATH $PATH:/home/$username/MiniZincIDE-2.1.4-bundle-linux-x86_64
 
 
-#
-# Copy and install serene-python-client
-#
-USER $username
-RUN mkdir -p serene-python-client && chown -R $username:$username serene-python-client
-COPY serene-python-client/ serene-python-client/
-# Install them
-USER root
-RUN pip3 install serene-python-client/*.gz && rm -r serene-python-client/
+##
+## Copy and install serene-python-client
+##
+#USER $username
+#RUN mkdir -p serene-python-client && chown -R $username:$username serene-python-client
+#COPY serene-python-client/ serene-python-client/
+## Install them
+#USER root
+#RUN pip3 install serene-python-client/*.gz && rm -r serene-python-client/
 
 
-RUN chown -R $username:$username /home/$username/stp/* && \
-    chown -R $username:$username /home/$username/stp/resources/*
-USER $username
-RUN mkdir -p /home/$username/stp/resources/results && chown -R $username:$username /home/$username/stp/resources/results
-ENV SERENE_PYTHON /home/$username/
-ENV SERENE_BENCH /home/$username/stp/resources
+#RUN chown -R $username:$username /home/$username/stp/* && \
+#    chown -R $username:$username /home/$username/stp/resources/*
+#USER $username
+#RUN mkdir -p /home/$username/stp/resources/results && chown -R $username:$username /home/$username/stp/resources/results
+#ENV SERENE_PYTHON /home/$username/
+#ENV SERENE_BENCH /home/$username/stp/resources
 
 CMD ["/bin/bash"]
 

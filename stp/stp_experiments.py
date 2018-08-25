@@ -16,7 +16,7 @@ import csv
 if "SERENE_PYTHON" not in os.environ:
     ###############################
     # ** VALUE HAS BEEN MODIFIED **
-    os.environ["SERENE_PYTHON"] = "/workspace/tmp/serene-python-client"
+    os.environ["SERENE_PYTHON"] = "/workspace/serene-python-client"
 
 project_path = os.environ["SERENE_PYTHON"]
 
@@ -74,7 +74,7 @@ log.addHandler(my_handler)
 ###############################
 # ** VALUE HAS BEEN MODIFIED **
 sn = serene.Serene(
-    host='192.168.86.204',
+    host='serene',
     port=8080,
 )
 print(sn)
@@ -181,7 +181,13 @@ reload(serene)
 #  Karma style: Changing # known semantic models
 #
 # =======================
-chuffed_lookup_path = os.path.join(project_path, "stp", "minizinc")
+######################################
+# ** THIS SECTION HAS BEEN MODIFIED **
+# chuffed_lookup_path = os.path.join(project_path, "stp", "minizinc")
+chuffed_lookup_path = "/home/serene/stp/minizinc"
+######################################
+
+
 result_csv = os.path.join(project_path, "stp", "resources", "benchmark_museum_loo_nounknown.csv")
 with open(result_csv, "w+") as f:
     csvf = csv.writer(f)
@@ -193,8 +199,7 @@ with open(result_csv, "w+") as f:
                    "soft_assumptions", "pattern_significance", "sm_accuracy", "sol_accuracy",
                    "match_score", "cost", "objective", "cor_match_score", "cor_cost"])  # header
 
-    # ** MIRA MODIFIES HERE **
-    sample_range = list(range(len(ssds)))[:3]
+    sample_range = list(range(len(ssds)))
     len_sample = len(sample_range)
     benchmark_results = [["experiment", "octopus", "dataset", "name", "ssd",
                           "method", "solution", "status",
@@ -206,7 +211,9 @@ with open(result_csv, "w+") as f:
 
     print("Starting benchmark")
 
-    for cur_id in sample_range:
+    ###############################
+    # ** VALUE HAS BEEN MODIFIED **
+    for cur_id in sample_range[:3]:
         print("Currently selected ssd: ", cur_id)
         test_sample = [cur_id]
 
@@ -214,13 +221,18 @@ with open(result_csv, "w+") as f:
         num = len(sample_range) -1
         train_sample = sample_range[:max(cur_id+num+1 - len_sample,0)] + sample_range[cur_id+1: cur_id+1+num]
         # ** MIRA MODIFIES HERE **
-        train_sample = train_sample[:2]
+        train_sample = train_sample[:14]
         print("     train sample size: ", num)
 
         try:
-            # ** MIRA MODIFIES HERE **
-            octo_file = "/workspace/tmp/serene-python-client/stp/resources/octopus/" + ssds[cur_id].name + ".pkl"
+            ######################################
+            # ** THIS SECTION HAS BEEN MODIFIED **
+            octo_file = "/workspace/serene-python-client/stp/resources/octopus/" + ssds[cur_id].name + ".pkl"
+            octo_pattern_file = "/workspace/serene-python-client/stp/resources/octopus/" + ssds[cur_id].name + ".pattern.pkl"
+            octo_matcher_predict_file = "/workspace/serene-python-client/stp/resources/octopus/" + ssds[cur_id].name + ".matcher_predict.pkl"
+
             print("OCTO_FILE:", octo_file)
+
             if Path(octo_file).exists():
                 octo = deserialize_obj(octo_file)
             else:
@@ -228,24 +240,40 @@ with open(result_csv, "w+") as f:
                 octo._matcher._pp = None
                 serialize_obj(octo, octo_file)
 
+            ######################################
+
         except Exception as e:
             logging.error("Octopus creation failed: {}".format(e))
             print("Octopus creation failed: {}".format(e))
-            raise
+            logging.exception(e)
             continue
 
         octo_csv = os.path.join(project_path, "stp", "resources", "storage",
                                 "patterns.{}.csv".format(octo.id))
         try:
-            octo_patterns = octo.get_patterns(octo_csv)
+            ######################################
+            # ** THIS SECTION HAS BEEN MODIFIED **
+            if Path(octo_pattern_file).exists():
+                octo_patterns = deserialize_obj(octo_pattern_file)
+            if Path(octo_pattern_file + ".error").exists():
+                octo_patterns = None
+            else:
+                octo_patterns = octo.get_patterns(octo_csv)
+                serialize_obj(octo_patterns, octo_pattern_file)
+
+            ######################################
         except Exception as e:
             print("failed to get patterns: {}".format(e))
             logging.warning("failed to get patterns: {}".format(e))
+            logging.exception(e)
             octo_patterns = None
 
-        # ** MIRA MODIFIES HERE **
-        import IPython
-        IPython.embed()
+            with open(octo_pattern_file + ".error", "w") as f:
+                f.write("error: {}".format(e))
+
+            # ** MIRA MODIFIES HERE **
+            # import IPython
+            # IPython.embed()
 
         print("Uploaded octopus:", octo)
 
@@ -281,7 +309,15 @@ with open(result_csv, "w+") as f:
 
         # we should do prediction outside of solvers so that solvers use the cached results!
         print("Doing schema matcher part")
-        df = octo.matcher_predict(dataset)
+        ######################################
+        # ** THIS SECTION HAS BEEN MODIFIED **
+        if Path(octo_matcher_predict_file).exists():
+            df = deserialize_obj(octo_pattern_file)
+        else:
+            df = octo.matcher_predict(dataset)
+            serialize_obj(df, octo_matcher_predict_file)
+        ######################################
+
         cor_ssd = al.process_unknown(ssd, train_labels)
         try:
             sm_accuracy = al.compare_semantic_label(al.semantic_label_df(cor_ssd, "user_label"),
