@@ -8,6 +8,8 @@ Converts serene intermediary output (alignment graph and matches) to construct a
 import os
 import logging
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
+
 import networkx as nx
 import json
 import pandas as pd
@@ -824,10 +826,11 @@ def compare_semantic_label(one_df, two_df):
     fmeasure = sklearn.metrics.f1_score(y_true, y_pred, average='macro')
     return {"accuracy": accuracy, "fmeasure": fmeasure}
 
+
 def do_chuffed(server, ch_octopus, ch_dataset, ch_column_names, ch_ssd, orig_ssd,
                train_flag=False, chuffed_path=None, simplify=True,
                patterns=None, experiment="loo", soft_assumptions=False,
-               pattern_sign=1.0, accu=0.0, pattern_time=None):
+               pattern_sign=1.0, accu=0.0, pattern_time=None, result_dir: Path=None, chuffed_id: int=None):
     res = []
     start = time.time()
     if patterns is None:
@@ -858,6 +861,11 @@ def do_chuffed(server, ch_octopus, ch_dataset, ch_column_names, ch_ssd, orig_ssd
             raise Exception("Chuffed found no solutions!")
         max_sol = len(solution) -1
 
+        ######################################
+        # ** THIS SECTION HAS BEEN MODIFIED **
+        mira_predicted_sms = []
+        ######################################
+
         for idx, sol in enumerate(solution):
             # convert solution to SSD
             json_sol = json.loads(sol)
@@ -867,8 +875,9 @@ def do_chuffed(server, ch_octopus, ch_dataset, ch_column_names, ch_ssd, orig_ssd
 
             ######################################
             # ** THIS SECTION HAS BEEN MODIFIED **
-            import IPython
-            IPython.embed()
+            # import IPython
+            # IPython.embed()
+            mira_predicted_sms.append(cp_ssd.json_dict)
             ######################################
 
             # time returned by chuffed
@@ -914,6 +923,14 @@ def do_chuffed(server, ch_octopus, ch_dataset, ch_column_names, ch_ssd, orig_ssd
                  soft_assumptions, pattern_sign, accu, None,
                  None, None, None, None, None, pattern_time, None, None, None, None]]
         raise
+
+    ######################################
+    # ** THIS SECTION HAS BEEN MODIFIED **
+    output_file = str(result_dir / ("%s.chuffed.%s.json" % (ch_ssd.name, chuffed_id)))
+    with open(output_file, "w") as f:
+        json.dump(mira_predicted_sms, f, indent=4)
+    ######################################
+
     return res
 
 def do_karma(server, k_octopus, k_dataset, k_ssd, orig_ssd,

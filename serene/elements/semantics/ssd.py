@@ -1305,6 +1305,7 @@ class SSDJsonWriter(object):
         d = OrderedDict()
         d["name"] = self._ssd.name
         d["ontologies"] = [onto.id for onto in self._ssd.ontology]
+        d["attributes"] = self.attributes
         d["semanticModel"] = self.semantic_model
         d["mappings"] = self.mappings
         return d
@@ -1364,3 +1365,19 @@ class SSDJsonWriter(object):
                     "attribute": dst,
                     "node": src
                 } for src, dst in maps]
+
+    @property
+    def attributes(self):
+        """Builds out the attributes section"""
+        attrs = []
+        for id, data in self._ssd.semantic_model.graph.nodes(data=True):
+            if type(data['data']) != Column:
+                continue
+            attrs.append({
+                "columnIds": [id],
+                "id": id,
+                "label": "--unimplemented--",
+                "name": data['data'].name,
+                "sql": "--unimplemented--"
+            })
+        return attrs

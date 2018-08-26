@@ -9,7 +9,7 @@ except ImportError as e:
     import serene
 
 import os
-import tarfile, json, pandas
+import tarfile
 from importlib import reload
 import csv
 
@@ -82,11 +82,7 @@ print(sn)
 if "SERENE_BENCH" not in os.environ:
     os.environ["SERENE_BENCH"] = os.path.join(project_path, "tests", "resources")
 
-######################################
-# ** THIS SECTION HAS BEEN MODIFIED **
-# benchmark_path = os.path.join(os.environ["SERENE_BENCH"], "museum_benchmark")
-benchmark_path = os.environ["SERENE_BENCH"]
-######################################
+benchmark_path = os.path.join(os.environ["SERENE_BENCH"], "museum_benchmark")
 print("benchmark_path: ", benchmark_path)
 
 print("========Optional cleaning=============")
@@ -167,10 +163,7 @@ for ds in sorted(os.listdir(dataset_dir)):
         ssd = empty_ssd.update(new_json, sn.datasets, sn.ontologies)
         ssds.append(sn.ssds.upload(ssd))
     # we remove the csv dataset
-    ######################################
-    # ** THIS SECTION HAS BEEN MODIFIED **
-    # os.remove(ds_f)
-    ######################################
+    os.remove(ds_f)
 
 
 # =======================
@@ -195,30 +188,8 @@ chuffed_lookup_path = "/home/serene/stp/minizinc"
 ######################################
 
 
-######################################
-# ** THIS SECTION HAS BEEN MODIFIED **
-######################################
-
-sample_range = list(range(len(ssds)))
-result_dir = Path(benchmark_path)
-
-if os.environ["KFOLD"] == "s01-s14":
-    result_dir = result_dir / "kfold-s01-s14"
-    train_samples = sample_range[:14]
-    test_samples = sample_range[14:]
-elif os.environ["KFOLD"] == "s15-s28":
-    result_dir = result_dir / "kfold-s15-s28"
-    train_samples = sample_range[14:]
-    test_samples = sample_range[:14]
-elif os.environ["KFOLD"] == "s08-s21":
-    result_dir = result_dir / "kfold-s08-s21"
-    train_samples = sample_range[7:21]
-    test_samples = sample_range[:7] + sample_range[21:]
-else:
-    raise Exception("Invalid kfold")
-
-result_dir.mkdir(exist_ok=True, parents=True)
-with open(str(result_dir / "serene_output.csv"), "w+") as f:
+result_csv = os.path.join(project_path, "stp", "resources", "benchmark_museum_loo_nounknown.csv")
+with open(result_csv, "w+") as f:
     csvf = csv.writer(f)
     csvf.writerow(["experiment", "octopus", "dataset", "name", "ssd",
                    "method", "solution", "status",
@@ -238,6 +209,13 @@ with open(str(result_dir / "serene_output.csv"), "w+") as f:
 
     print("Starting benchmark")
 
+    ###############################
+    # ** VALUE HAS BEEN MODIFIED **
+    sample_range = list(range(len(ssds)))
+
+    train_samples = sample_range[:14]
+    test_samples = sample_range[14:]
+
     # len_sample = len(sample_range)
     # for cur_id in sample_range[:3]:
     #     test_sample = [cur_id]
@@ -246,7 +224,6 @@ with open(str(result_dir / "serene_output.csv"), "w+") as f:
     #     num = len(sample_range) -1
     #     train_samples = sample_range[:max(cur_id+num+1 - len_sample,0)] + sample_range[cur_id+1: cur_id+1+num]
     #     print("     train sample size: ", len(train_samples))
-
     for cur_id in test_samples:
         print("Currently selected ssd: ", cur_id)
         try:
@@ -263,7 +240,7 @@ with open(str(result_dir / "serene_output.csv"), "w+") as f:
             else:
                 octo = al.create_octopus(sn, ssds, train_samples, ontologies)
                 octo._matcher._pp = None
-                # serialize_obj(octo, octo_file)
+                serialize_obj(octo, octo_file)
 
             ######################################
 
@@ -284,7 +261,8 @@ with open(str(result_dir / "serene_output.csv"), "w+") as f:
                 octo_patterns = None
             else:
                 octo_patterns = octo.get_patterns(octo_csv)
-                # serialize_obj(octo_patterns, octo_pattern_file)
+                serialize_obj(octo_patterns, octo_pattern_file)
+
             ######################################
         except Exception as e:
             print("failed to get patterns: {}".format(e))
@@ -292,8 +270,8 @@ with open(str(result_dir / "serene_output.csv"), "w+") as f:
             logging.exception(e)
             octo_patterns = None
 
-            # with open(octo_pattern_file + ".error", "w") as _f:
-            #     _f.write("error: {}".format(e))
+            with open(octo_pattern_file + ".error", "w") as f:
+                f.write("error: {}".format(e))
 
             # ** MIRA MODIFIES HERE **
             # import IPython
@@ -301,23 +279,21 @@ with open(str(result_dir / "serene_output.csv"), "w+") as f:
 
         print("Uploaded octopus:", octo)
 
-        ###############################
-        # ** VALUE HAS BEEN MODIFIED **
         chuffed_paths = [
             (os.path.join(chuffed_lookup_path, "chuffed-rel2onto_20170718"),
              True, None, False, 1.0),
             (os.path.join(chuffed_lookup_path, "chuffed-rel2onto_20170722"),
              True, None, True, 1.0),
-            # (os.path.join(chuffed_lookup_path, "chuffed-rel2onto_20170728"),
-            #  False, octo_patterns, False, 1.0),
-            # (os.path.join(chuffed_lookup_path, "chuffed-rel2onto_20170728"),
-            #  False, octo_patterns, True, 1.0),
-            # (os.path.join(chuffed_lookup_path, "chuffed-rel2onto_20170728"),
-            #  False, octo_patterns, True, 5.0),
-            # (os.path.join(chuffed_lookup_path, "chuffed-rel2onto_20170728"),
-            #  False, octo_patterns, True, 10.0),
-            # (os.path.join(chuffed_lookup_path, "chuffed-rel2onto_20170728"),
-            #  False, octo_patterns, True, 20.0),
+            (os.path.join(chuffed_lookup_path, "chuffed-rel2onto_20170728"),
+             False, octo_patterns, False, 1.0),
+            (os.path.join(chuffed_lookup_path, "chuffed-rel2onto_20170728"),
+             False, octo_patterns, True, 1.0),
+            (os.path.join(chuffed_lookup_path, "chuffed-rel2onto_20170728"),
+             False, octo_patterns, True, 5.0),
+            (os.path.join(chuffed_lookup_path, "chuffed-rel2onto_20170728"),
+             False, octo_patterns, True, 10.0),
+            (os.path.join(chuffed_lookup_path, "chuffed-rel2onto_20170728"),
+             False, octo_patterns, True, 20.0),
         ]
 
         print("Getting labels in the training set")
@@ -337,27 +313,14 @@ with open(str(result_dir / "serene_output.csv"), "w+") as f:
         print("Doing schema matcher part")
         ######################################
         # ** THIS SECTION HAS BEEN MODIFIED **
-        # if Path(octo_matcher_predict_file).exists():
-        #     df = deserialize_obj(octo_matcher_predict_file)
-        # else:
-        df = octo.matcher_predict(dataset)
-        serialize_obj(df, octo_matcher_predict_file)
-        df.to_csv(result_dir / ("%s.df.csv" % ssd.name))
+        if Path(octo_matcher_predict_file).exists():
+            df = deserialize_obj(octo_pattern_file)
+        else:
+            df = octo.matcher_predict(dataset)
+            serialize_obj(df, octo_matcher_predict_file)
         ######################################
 
         cor_ssd = al.process_unknown(ssd, train_labels)
-
-        ######################################
-        # ** THIS SECTION HAS BEEN MODIFIED **
-        # import IPython
-        # IPython.embed()
-
-        with open(str(result_dir / ("%s.cor_ssd.json" % ssd.name)), "w") as _f:
-            json.dump(cor_ssd.json_dict, _f, indent=4)
-        with open(str(result_dir / ("%s.ssd.json" % ssd.name)), "w") as _f:
-            json.dump(ssd.json_dict, _f, indent=4)
-        ######################################
-
         try:
             sm_accuracy = al.compare_semantic_label(al.semantic_label_df(cor_ssd, "user_label"),
                                              df[["column_id", "label"]])["accuracy"]
@@ -367,19 +330,16 @@ with open(str(result_dir / "serene_output.csv"), "w+") as f:
             sm_accuracy = None
 
         # cp solver approach
-        ######################################
-        # ** THIS SECTION HAS BEEN MODIFIED **
-        for i, (chuffed, simpl, pat, soft, pts) in enumerate(chuffed_paths):
+        for (chuffed, simpl, pat, soft, pts) in chuffed_paths:
             print("---> trying chuffed {}".format(chuffed))
             res = al.do_chuffed(sn, octo, dataset, column_names, cor_ssd, ssd,
                              train_flag=False,
                              chuffed_path=chuffed, simplify=simpl,
                              patterns=pat, soft_assumptions=soft,
                              pattern_sign=pts, accu=sm_accuracy,
-                             experiment="eknown_{}".format(len(train_samples)), result_dir=result_dir, chuffed_id=i)
+                             experiment="eknown_{}".format(len(train_samples)))
             benchmark_results += res
             csvf.writerows(res)
-        ######################################
 
         # karma approach
         print("---> trying karma")
